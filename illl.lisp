@@ -28,3 +28,10 @@
       (map-string #'transform-into-result
                   string))
     result))
+
+(defun do-rewrite (string rules n)
+  (labels ((recur (i string)
+             (if (<= i 0)
+                 string
+                 (recur (1- i) (rewrite string rules)))))
+    (recur n string)))
