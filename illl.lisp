@@ -1,3 +1,37 @@
+(defpackage :illl
+  (:use :cl :cl-cairo2)
+  (:export :make-rules
+           :do-rewrite))
+
+(in-package :illl)
+
+;;; Cairo
+
+(defvar *png-dir* (merge-pathnames "output/"))
+(defvar *png-width* 400)
+(defvar *png-height* 400)
+
+(defun png-pathname-string (fname &optional (check-existance nil))
+  (let ((pngdir  *png-dir*))
+    (if (probe-file pngdir)
+        (let ((path (namestring (merge-pathnames (concatenate 'string fname ".png") pngdir))))
+          (if check-existance
+              (if (probe-file path)
+                  path
+                  (error "~A doesn't exist" path))
+              path))
+        (error "~A (see *png-dir*) doesn't exist" pngdir))))
+
+(defmacro with-png-surface-rgba ((fname width height) &body body)
+  `(with-png-file (,fname :argb32 ,width ,height)
+     (clear-surface-rgba)
+     (set-source-rgb 0 0 0)
+     ;(scale ,width ,height)
+     ,@body))
+
+(defmacro write-to-png ((verb) &body body)
+  `(with-png-surface-rgba ((png-pathname-string ,verb) *png-width* *png-height*)
+     ,@body))
 
 ;;; Rewriting
 
