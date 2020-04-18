@@ -14,13 +14,21 @@
 (defun png-pathname-string (fname &optional (check-existance nil))
   (let ((pngdir  *png-dir*))
     (if (probe-file pngdir)
-        (let ((path (namestring (merge-pathnames (concatenate 'string fname ".png") pngdir))))
+        (let ((path (namestring (merge-pathnames (concatenate 'string fname ".png")
+                                                 pngdir))))
           (if check-existance
               (if (probe-file path)
                   path
                   (error "~A doesn't exist" path))
               path))
         (error "~A (see *png-dir*) doesn't exist" pngdir))))
+
+(defun clear-surface-rgba ()
+  (save)
+  (set-source-rgba 1.0 1.0 1.0 1.0)
+  (set-operator :source)
+  (paint)
+  (restore))
 
 (defmacro with-png-surface-rgba ((fname width height) &body body)
   `(with-png-file (,fname :argb32 ,width ,height)
@@ -32,6 +40,71 @@
 (defmacro write-to-png ((verb) &body body)
   `(with-png-surface-rgba ((png-pathname-string ,verb) *png-width* *png-height*)
      ,@body))
+
+;;; Turtle
+
+(defvar *turtle-pos* '(0 0))
+(defvar *turtle-heading* 0)
+
+;; Turtle Motion Queries
+
+(defun pos ()
+  *turtle-pos*)
+
+(defun xcor ()
+  (car *turtle-pos*))
+
+(defun ycor ()
+  (car (cdr *turtle-pos*)))
+
+(defun heading ()
+  *turtle-heading*)
+
+(defun toward (pos) ; TODO
+  "outputs a number, the heading at which the turtle should be
+ facing so that it would point from its current position to 
+ the position given as the input.")
+
+;; Turtle Motion
+
+(defun deg->rad (x) (* x (/ pi 180)))
+(defun rad->deg (x) (* x (/ 180 pi)))
+
+(defun move (dist heading)
+  "Calculates new coords for forward and back"
+  (let ((x-off (* dist (cos (deg->rad heading))))
+        (y-off (* dist (sin (deg->rad heading)))))
+    (list x-off y-off)))
+
+(defun forward (dist)
+  (let* ((newpos (move dist (heading)))
+         (newx (+ (xcor) (first newpos)))
+         (newy (+ (ycor) (second newpos))))
+    (setxy newx newy)))
+
+(defun back (dist)
+  (let* ((newpos (move dist (+ 180 (heading))))
+         (newx (+ (xcor) (first newpos)))
+         (newy (+ (ycor) (second newpos))))
+    (setxy newx newy)))
+
+(defun setpos (pos)
+  (setf *turtle-pos* pos))
+
+(defun setxy (xcor ycor)
+  (setf *turtle-pos* (list xcor ycor)))
+
+(defun setx (xcor)
+  (setf (car *turtle-pos*) xcor))
+
+(defun sety (ycor)
+  (setf (car (cdr *turtle-pos*)) ycor))
+
+(defun setheading (degrees)
+  (setf *turtle-heading* degrees))
+
+(defun seth (degrees)
+  (setheading degrees))
 
 ;;; Rewriting
 
